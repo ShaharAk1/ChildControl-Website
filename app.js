@@ -19,10 +19,9 @@ const db = firebase.firestore();
 
 // --- schedule constants, mirrored from childcontrol/schedule.py ---------------
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const SLOTS_PER_DAY = 48;
 const STATES = ["F", "S", "L"];
-const STATE_NAMES = { F: "Free", S: "Study", L: "Locked" };
+const stateName = (code) => (["F", "S", "L"].includes(code) ? t("state." + code) : t("state.unknown"));
 const STATE_COLORS = { F: "#3fa579", S: "#e0982f", L: "#dd6b7f" };
 
 function blankWeek(state) {
@@ -43,24 +42,24 @@ function normalizeWeek(week) {
 
 function relativeTime(date) {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("rel.now");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return t("rel.min", { n: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  if (hours < 24) return t("rel.hour", { n: hours });
+  return t("rel.day", { n: Math.floor(hours / 24) });
 }
 
 function friendlyAuthError(err) {
   const map = {
-    "auth/invalid-email": "That doesn't look like a valid email.",
-    "auth/user-not-found": "No account with that email.",
-    "auth/wrong-password": "Wrong password.",
-    "auth/email-already-in-use": "An account already exists for that email.",
-    "auth/weak-password": "Password should be at least 6 characters.",
-    "auth/invalid-credential": "Wrong email or password.",
+    "auth/invalid-email": "err.invalidEmail",
+    "auth/user-not-found": "err.userNotFound",
+    "auth/wrong-password": "err.wrongPassword",
+    "auth/email-already-in-use": "err.emailInUse",
+    "auth/weak-password": "err.weakPassword",
+    "auth/invalid-credential": "err.invalidCredential",
   };
-  return map[err.code] || err.message || "Something went wrong.";
+  return map[err.code] ? t(map[err.code]) : err.message || t("err.generic");
 }
 
 // --- view switching -------------------------------------------------------------
@@ -139,12 +138,12 @@ document.getElementById("pairing-form").addEventListener("submit", async (e) => 
   } catch (err) {
     // A denied read (expired past the rule's 15-minute window) looks the
     // same to the parent as a code that never existed.
-    errorEl.textContent = "That code wasn't found, or it expired. Generate a new one on his PC.";
+    errorEl.textContent = t("err.codeNotFound");
     errorEl.hidden = false;
     return;
   }
   if (!codeDoc.exists) {
-    errorEl.textContent = "That code wasn't found, or it expired. Generate a new one on his PC.";
+    errorEl.textContent = t("err.codeNotFound");
     errorEl.hidden = false;
     return;
   }
@@ -153,7 +152,7 @@ document.getElementById("pairing-form").addEventListener("submit", async (e) => 
   try {
     await db.collection("devices").doc(deviceUid).update({ ownerUid: auth.currentUser.uid });
   } catch (err) {
-    errorEl.textContent = "This device is already linked to another account.";
+    errorEl.textContent = t("err.alreadyLinked");
     errorEl.hidden = false;
     return;
   }
@@ -206,7 +205,7 @@ function buildScheduleGrid(container, initialWeek, onDirty) {
       ctx.fillStyle = "#20263a";
       ctx.font = "10px Segoe UI, sans-serif";
       ctx.textAlign = "right";
-      ctx.fillText(DAYS[day].slice(0, 3), LABEL_W - 8, y + CELL_H / 2 + 4);
+      ctx.fillText(t("day." + day), LABEL_W - 8, y + CELL_H / 2 + 4);
       for (let slot = 0; slot < SLOTS_PER_DAY; slot++) {
         const x = LABEL_W + slot * CELL_W;
         ctx.fillStyle = STATE_COLORS[week[day][slot]];
@@ -299,12 +298,12 @@ function normalizeApp(raw) {
 }
 
 function checkDomain(d) {
-  return d.length <= 253 && DOMAIN_RE.test(d) ? "" : "That doesn't look like a website address (example: youtube.com).";
+  return d.length <= 253 && DOMAIN_RE.test(d) ? "" : t("lists.badDomain");
 }
 
 function checkApp(a) {
-  if (!a.toLowerCase().endsWith(".exe")) return "Program names end in .exe (example: steam.exe).";
-  if (a.length > 100 || /[\\/:*?"<>|]/.test(a)) return "Enter just the file name, not a path.";
+  if (!a.toLowerCase().endsWith(".exe")) return t("lists.appExe");
+  if (a.length > 100 || /[\\/:*?"<>|]/.test(a)) return t("lists.appPath");
   return "";
 }
 
@@ -331,7 +330,7 @@ function createListEditor(title, hint, normalize, check, onChange) {
   const addBtn = document.createElement("button");
   addBtn.type = "submit";
   addBtn.className = "pill-btn small";
-  addBtn.textContent = "Add";
+  addBtn.textContent = t("lists.add");
   row.append(input, addBtn);
   wrap.appendChild(row);
   const err = document.createElement("p");
@@ -344,7 +343,7 @@ function createListEditor(title, hint, normalize, check, onChange) {
     if (!items.length) {
       const empty = document.createElement("span");
       empty.className = "muted";
-      empty.textContent = "Nothing blocked.";
+      empty.textContent = t("lists.empty");
       chips.appendChild(empty);
     }
     for (const item of items) {
@@ -353,7 +352,7 @@ function createListEditor(title, hint, normalize, check, onChange) {
       chip.append(item);
       const x = document.createElement("button");
       x.type = "button";
-      x.setAttribute("aria-label", `Remove ${item}`);
+      x.setAttribute("aria-label", t("lists.remove", { item }));
       x.textContent = "×";
       x.addEventListener("click", () => {
         items = items.filter((i) => i !== item);
@@ -408,7 +407,7 @@ function createDeviceCard(deviceId, data) {
   nameInput.type = "text";
   nameInput.className = "device-name";
   nameInput.value = data.name || "";
-  nameInput.placeholder = "Name this PC";
+  nameInput.placeholder = t("device.namePlaceholder");
   nameInput.addEventListener("change", () => {
     db.collection("devices").doc(deviceId)
       .update({ name: nameInput.value.trim() })
@@ -427,10 +426,10 @@ function createDeviceCard(deviceId, data) {
   const overrideRow = document.createElement("div");
   overrideRow.className = "override-row";
   const overrideButtons = [
-    ["Free for 30 min", "F", 30],
-    ["Free for 2 hours", "F", 120],
-    ["Study now for 1 hour", "S", 60],
-    ["Lock now for 1 hour", "L", 60],
+    [t("override.free30"), "F", 30],
+    [t("override.free120"), "F", 120],
+    [t("override.study60"), "S", 60],
+    [t("override.lock60"), "L", 60],
   ];
   for (const [label, state, minutes] of overrideButtons) {
     const btn = document.createElement("button");
@@ -440,7 +439,7 @@ function createDeviceCard(deviceId, data) {
     btn.addEventListener("click", () => {
       pushOverride(deviceId, state, minutes)
         .then(() => startPending(state))
-        .catch((err) => alert("Could not send: " + err.message));
+        .catch((err) => alert(t("couldNotSend", { msg: err.message })));
     });
     overrideRow.appendChild(btn);
   }
@@ -448,11 +447,11 @@ function createDeviceCard(deviceId, data) {
   const backBtn = document.createElement("button");
   backBtn.type = "button";
   backBtn.className = "link-btn";
-  backBtn.textContent = "Back to schedule (clear override)";
+  backBtn.textContent = t("override.back");
   backBtn.addEventListener("click", () => {
     clearOverride(deviceId)
       .then(() => startPending(null))
-      .catch((err) => alert("Could not send: " + err.message));
+      .catch((err) => alert(t("couldNotSend", { msg: err.message })));
   });
   el.appendChild(backBtn);
 
@@ -466,12 +465,13 @@ function createDeviceCard(deviceId, data) {
   brushRow.style.marginTop = "16px";
   const gridSection = document.createElement("div");
   gridSection.className = "grid-section";
+  gridSection.dir = "ltr";
 
   let dirty = false;
   const grid = buildScheduleGrid(gridSection, normalizeWeek(data.schedule), () => {
     dirty = true;
     saveBtn.disabled = false;
-    saveBtn.textContent = "Save schedule";
+    saveBtn.textContent = t("schedule.save");
   });
 
   for (const state of STATES) {
@@ -483,7 +483,7 @@ function createDeviceCard(deviceId, data) {
     if (state === "S") radio.checked = true;
     radio.addEventListener("change", () => grid.setBrush(state));
     label.appendChild(radio);
-    label.append(` ${STATE_NAMES[state]}`);
+    label.append(` ${stateName(state)}`);
     brushRow.appendChild(label);
   }
   el.appendChild(brushRow);
@@ -491,9 +491,9 @@ function createDeviceCard(deviceId, data) {
   const legend = document.createElement("div");
   legend.className = "state-legend";
   const legendItems = [
-    ["F", "Everything allowed."],
-    ["S", "Games and distracting sites blocked, computer usable."],
-    ["L", "Computer not usable at all."],
+    ["F", t("legend.F")],
+    ["S", t("legend.S")],
+    ["L", t("legend.L")],
   ];
   for (const [state, text] of legendItems) {
     const item = document.createElement("span");
@@ -510,23 +510,23 @@ function createDeviceCard(deviceId, data) {
   const saveBtn = document.createElement("button");
   saveBtn.type = "button";
   saveBtn.className = "pill-btn";
-  saveBtn.textContent = "Save schedule";
+  saveBtn.textContent = t("schedule.save");
   saveBtn.disabled = true;
   saveBtn.addEventListener("click", async () => {
     saveBtn.disabled = true;
-    saveBtn.textContent = "Saving...";
+    saveBtn.textContent = t("saving");
     try {
       await db.collection("devices").doc(deviceId).update({
         schedule: grid.getWeek(),
         scheduleUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       dirty = false;
-      saveBtn.textContent = "Saved";
-      setTimeout(() => { if (!dirty) saveBtn.textContent = "Save schedule"; }, 1500);
+      saveBtn.textContent = t("saved");
+      setTimeout(() => { if (!dirty) saveBtn.textContent = t("schedule.save"); }, 1500);
     } catch (err) {
       saveBtn.disabled = false;
-      saveBtn.textContent = "Save schedule";
-      alert("Could not save: " + err.message);
+      saveBtn.textContent = t("schedule.save");
+      alert(t("couldNotSave", { msg: err.message }));
     }
   });
   el.appendChild(saveBtn);
@@ -540,21 +540,21 @@ function createDeviceCard(deviceId, data) {
   const markListsDirty = () => {
     listsDirty = true;
     saveListsBtn.disabled = false;
-    saveListsBtn.textContent = "Save block lists";
+    saveListsBtn.textContent = t("lists.save");
   };
-  const sitesEditor = createListEditor("Blocked websites", "youtube.com", normalizeDomain, checkDomain, markListsDirty);
-  const appsEditor = createListEditor("Blocked programs and games", "steam.exe", normalizeApp, checkApp, markListsDirty);
+  const sitesEditor = createListEditor(t("lists.sites"), "youtube.com", normalizeDomain, checkDomain, markListsDirty);
+  const appsEditor = createListEditor(t("lists.apps"), "steam.exe", normalizeApp, checkApp, markListsDirty);
   const listsNote = document.createElement("p");
   listsNote.className = "muted";
   const saveListsBtn = document.createElement("button");
   saveListsBtn.type = "button";
   saveListsBtn.className = "pill-btn";
-  saveListsBtn.textContent = "Save block lists";
+  saveListsBtn.textContent = t("lists.save");
   saveListsBtn.disabled = true;
   const listsPending = createPendingBadge();
   saveListsBtn.addEventListener("click", async () => {
     saveListsBtn.disabled = true;
-    saveListsBtn.textContent = "Saving...";
+    saveListsBtn.textContent = t("saving");
     try {
       await db.collection("devices").doc(deviceId).update({
         blockedSites: sitesEditor.get(),
@@ -562,13 +562,13 @@ function createDeviceCard(deviceId, data) {
         blockedUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       listsDirty = false;
-      saveListsBtn.textContent = "Sent";
-      setTimeout(() => { if (!listsDirty) saveListsBtn.textContent = "Save block lists"; }, 1500);
+      saveListsBtn.textContent = t("sent");
+      setTimeout(() => { if (!listsDirty) saveListsBtn.textContent = t("lists.save"); }, 1500);
     } catch (err) {
       saveListsBtn.disabled = false;
-      saveListsBtn.textContent = "Save block lists";
-      alert("Could not save: " + err.message +
-        (err.code === "permission-denied" ? "\n\nThe Firestore Security Rules probably don't allow the parent to edit these fields yet." : ""));
+      saveListsBtn.textContent = t("lists.save");
+      alert(t("couldNotSave", { msg: err.message }) +
+        (err.code === "permission-denied" ? "\n\n" + t("permissionHint") : ""));
     }
   });
   listsSection.append(sitesEditor.el, appsEditor.el, listsNote, saveListsBtn, listsPending.el);
@@ -577,14 +577,14 @@ function createDeviceCard(deviceId, data) {
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
   removeBtn.className = "link-btn";
-  removeBtn.textContent = "Unlink this device";
+  removeBtn.textContent = t("unlink.btn");
   removeBtn.addEventListener("click", async () => {
-    const name = nameInput.value.trim() || "this device";
-    if (!confirm(`Are you sure you want to unlink "${name}" from your account? You can link it again later with a new pairing code.`)) return;
+    const name = nameInput.value.trim() || t("unlink.thisDevice");
+    if (!confirm(t("unlink.confirm", { name }))) return;
     try {
       await db.collection("devices").doc(deviceId).update({ ownerUid: null });
     } catch (err) {
-      alert("Could not unlink: " + err.message);
+      alert(t("unlink.failed", { msg: err.message }));
     }
   });
   el.appendChild(removeBtn);
@@ -640,7 +640,7 @@ function createDeviceCard(deviceId, data) {
     const recent = sentAt && Date.now() - sentAt < LISTS_PENDING_MAX_MS;
     const waiting = !!(recent && requested && !dirty && (!reported || reported.join() !== requested.join()));
     schedulePending.el.hidden = !waiting;
-    if (waiting) schedulePending.text.textContent = "Pending: waiting for the PC to apply your schedule";
+    if (waiting) schedulePending.text.textContent = t("pending.schedule");
     if (!dirty) grid.setWeek(waiting ? requested : (reported || docData.schedule));
     clearTimeout(scheduleTimer);
     if (recent) scheduleTimer = setTimeout(() => updateSchedule(lastData), sentAt + LISTS_PENDING_MAX_MS - Date.now() + 500);
@@ -654,7 +654,7 @@ function createDeviceCard(deviceId, data) {
       sitesEditor.set(reported.blockedSites);
       appsEditor.set(reported.blockedApps);
     }
-    listsNote.textContent = hasReport ? "" : "Waiting for the PC to report its current lists (needs the updated agent).";
+    listsNote.textContent = hasReport ? "" : t("lists.waiting");
 
     const sentAt = docData.blockedUpdatedAt && docData.blockedUpdatedAt.toMillis ? docData.blockedUpdatedAt.toMillis() : 0;
     const recent = sentAt && Date.now() - sentAt < LISTS_PENDING_MAX_MS;
@@ -663,7 +663,7 @@ function createDeviceCard(deviceId, data) {
     const waiting = recent && !listsDirty && (!hasReport ||
       !sameList(requestedSites, reported.blockedSites) || !sameList(requestedApps, reported.blockedApps));
     listsPending.el.hidden = !waiting;
-    if (waiting) listsPending.text.textContent = "Pending: waiting for the PC to apply your block lists";
+    if (waiting) listsPending.text.textContent = t("pending.lists");
     clearTimeout(listsTimer);
     if (recent) listsTimer = setTimeout(() => updateLists(lastData), sentAt + LISTS_PENDING_MAX_MS - Date.now() + 500);
   }
@@ -687,20 +687,20 @@ function createDeviceCard(deviceId, data) {
       }
     }
 
-    statusPill.textContent = STATE_NAMES[stateCode] || "Unknown";
+    statusPill.textContent = stateName(stateCode);
     statusPill.style.background = STATE_COLORS[stateCode] || "#8a94ac";
     pendingBadge.hidden = !pending;
     if (pending) {
       pendingText.textContent = pending.target
-        ? `Pending: switching to ${STATE_NAMES[pending.target]}`
-        : "Pending: going back to the schedule";
+        ? t("pending.switch", { state: stateName(pending.target) })
+        : t("pending.back");
     }
     updateLists(docData);
     updateSchedule(docData);
     const lastSeen = docData.lastSeen;
     lastSeenEl.textContent = lastSeen && lastSeen.toDate
-      ? `Last seen ${relativeTime(lastSeen.toDate())}`
-      : "Never seen yet - install and pair the console first.";
+      ? t("lastSeen", { when: relativeTime(lastSeen.toDate()) })
+      : t("neverSeen");
   }
   schedulePendingExpiry();
   updateStatus(data);
@@ -738,6 +738,14 @@ function renderDeviceList(docs) {
   }
 }
 
+let lastDeviceDocs = [];
+
+window.addEventListener("langchange", () => {
+  const docs = lastDeviceDocs;
+  clearDeviceCards();
+  renderDeviceList(docs);
+});
+
 function clearDeviceCards() {
   for (const card of deviceCards.values()) card.unsubscribe();
   deviceCards.clear();
@@ -751,6 +759,7 @@ let unsubscribeList = null;
 auth.onAuthStateChanged((user) => {
   if (unsubscribeList) { unsubscribeList(); unsubscribeList = null; }
   clearDeviceCards();
+  lastDeviceDocs = [];
 
   if (!user) {
     setView("login");
@@ -760,6 +769,7 @@ auth.onAuthStateChanged((user) => {
   let firstSnapshot = true;
   unsubscribeList = db.collection("devices").where("ownerUid", "==", user.uid)
     .onSnapshot((snapshot) => {
+      lastDeviceDocs = snapshot.docs;
       renderDeviceList(snapshot.docs);
       if (firstSnapshot) {
         firstSnapshot = false;
@@ -767,3 +777,8 @@ auth.onAuthStateChanged((user) => {
       }
     }, (err) => console.error("device list watch failed", err));
 });
+
+// --- language ---------------------------------------------------------------------
+
+document.getElementById("lang-toggle").addEventListener("click", () => setLang(getLang() === "he" ? "en" : "he"));
+applyStaticTranslations();
