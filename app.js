@@ -26,6 +26,8 @@ const ROW_DAYS = [6, 0, 1, 2, 3, 4, 5];
 const STATES = ["F", "S", "L"];
 const stateName = (code) => (["F", "S", "L"].includes(code) ? t("state." + code) : t("state.unknown"));
 const STATE_COLORS = { F: "#3fa579", S: "#e0982f", L: "#dd6b7f" };
+// Darker shades for white text on the status pill (the grid keeps the lighter ones).
+const PILL_COLORS = { F: "#2b8a5f", S: "#b56b0a", L: "#c4425a" };
 
 function blankWeek(state) {
   return Array.from({ length: 7 }, () => (state || "F").repeat(SLOTS_PER_DAY));
@@ -353,7 +355,9 @@ function createListEditor(title, hint, normalize, check, onChange) {
     for (const item of items) {
       const chip = document.createElement("span");
       chip.className = "chip";
-      chip.append(item);
+      const label = document.createElement("bdi");
+      label.textContent = item;
+      chip.appendChild(label);
       const x = document.createElement("button");
       x.type = "button";
       x.setAttribute("aria-label", t("lists.remove", { item }));
@@ -692,7 +696,7 @@ function createDeviceCard(deviceId, data) {
     }
 
     statusPill.textContent = stateName(stateCode);
-    statusPill.style.background = STATE_COLORS[stateCode] || "#8a94ac";
+    statusPill.style.background = PILL_COLORS[stateCode] || "#66708a";
     pendingBadge.hidden = !pending;
     if (pending) {
       pendingText.textContent = pending.target

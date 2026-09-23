@@ -181,10 +181,10 @@ input:focus {
 }
 
 .status-pill {
-  padding: 4px 14px;
+  padding: 5px 16px;
   border-radius: 999px;
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -298,7 +298,9 @@ input:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 4px 3px 10px;
+  padding: 3px 4px;
+  padding-inline-start: 12px;
+  padding-inline-end: 4px;
   border-radius: 999px;
   background: rgba(138, 148, 172, 0.16);
   font-size: 13px;
@@ -315,6 +317,8 @@ input:focus {
   line-height: 1;
   font-size: 16px;
 }
+
+.chip bdi { unicode-bidi: isolate; }
 
 .chip button:hover { background: rgba(221, 107, 127, 0.25); }
 
