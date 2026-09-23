@@ -386,6 +386,21 @@ function createDeviceCard(deviceId, data) {
   });
   el.appendChild(saveBtn);
 
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "link-btn";
+  removeBtn.textContent = "Unlink this device";
+  removeBtn.addEventListener("click", async () => {
+    const name = nameInput.value.trim() || "this device";
+    if (!confirm(`Are you sure you want to unlink "${name}" from your account? You can link it again later with a new pairing code.`)) return;
+    try {
+      await db.collection("devices").doc(deviceId).update({ ownerUid: null });
+    } catch (err) {
+      alert("Could not unlink: " + err.message);
+    }
+  });
+  el.appendChild(removeBtn);
+
   function updateStatus(docData) {
     const status = docData.status || {};
     const stateCode = status.state || "";
