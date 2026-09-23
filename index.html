@@ -13,52 +13,54 @@
     <span class="blob blob-c"></span>
   </div>
 
+  <button type="button" id="lang-toggle" class="lang-toggle" aria-label="Language"></button>
+
   <main class="page">
-    <div id="loading"><p class="muted" style="text-align:center;">Loading...</p></div>
+    <div id="loading"><p class="muted" style="text-align:center;" data-i18n="loading">Loading...</p></div>
 
     <!-- Login / sign up -->
     <section id="view-login" class="card auth-card" hidden>
       <h1>ChildControl</h1>
-      <p class="muted">Sign in to manage his PC remotely.</p>
+      <p class="muted" data-i18n="login.subtitle">Sign in to manage his PC remotely.</p>
 
       <form id="login-form">
-        <label for="login-email">Email</label>
+        <label for="login-email" data-i18n="email">Email</label>
         <input type="email" id="login-email" required autocomplete="email">
-        <label for="login-password">Password</label>
+        <label for="login-password" data-i18n="password">Password</label>
         <input type="password" id="login-password" required autocomplete="current-password">
         <p id="login-error" class="error" hidden></p>
-        <button type="submit" class="pill-btn">Log in</button>
-        <button type="button" id="show-signup" class="link-btn">Need an account? Sign up</button>
+        <button type="submit" class="pill-btn" data-i18n="login.btn">Log in</button>
+        <button type="button" id="show-signup" class="link-btn" data-i18n="login.needAccount">Need an account? Sign up</button>
       </form>
 
       <form id="signup-form" hidden>
-        <label for="signup-email">Email</label>
+        <label for="signup-email" data-i18n="email">Email</label>
         <input type="email" id="signup-email" required autocomplete="email">
-        <label for="signup-password">Password</label>
+        <label for="signup-password" data-i18n="password">Password</label>
         <input type="password" id="signup-password" required autocomplete="new-password" minlength="6">
         <p id="signup-error" class="error" hidden></p>
-        <button type="submit" class="pill-btn">Create account</button>
-        <button type="button" id="show-login" class="link-btn">Already have an account? Log in</button>
+        <button type="submit" class="pill-btn" data-i18n="signup.btn">Create account</button>
+        <button type="button" id="show-login" class="link-btn" data-i18n="signup.haveAccount">Already have an account? Log in</button>
       </form>
     </section>
 
     <!-- Link a device via pairing code -->
     <section id="view-pairing" class="card" hidden>
       <div class="topbar">
-        <h1>Link a device</h1>
-        <button id="pairing-logout" class="link-btn">Log out</button>
+        <h1 data-i18n="pairing.title">Link a device</h1>
+        <button id="pairing-logout" class="link-btn" data-i18n="logout">Log out</button>
       </div>
-      <p class="muted">
+      <p class="muted" data-i18n-html="pairing.help">
         On his PC: open the ChildControl console, go to
         <strong>Setup &rarr; Website</strong>, and click
         <strong>Generate pairing code</strong>. Enter it here within 15 minutes.
       </p>
       <form id="pairing-form">
-        <label for="pairing-code">Pairing code</label>
+        <label for="pairing-code" data-i18n="pairing.codeLabel">Pairing code</label>
         <input type="text" id="pairing-code" maxlength="8" autocapitalize="characters"
-               autocomplete="off" placeholder="e.g. PLUM7X2Q" required>
+               autocomplete="off" placeholder="e.g. PLUM7X2Q" data-i18n-placeholder="pairing.codePlaceholder" required>
         <p id="pairing-error" class="error" hidden></p>
-        <button type="submit" class="pill-btn">Link device</button>
+        <button type="submit" class="pill-btn" data-i18n="pairing.btn">Link device</button>
       </form>
     </section>
 
@@ -66,16 +68,17 @@
     <section id="view-dashboard" hidden>
       <div class="topbar">
         <h1>ChildControl</h1>
-        <button id="dashboard-logout" class="link-btn">Log out</button>
+        <button id="dashboard-logout" class="link-btn" data-i18n="logout">Log out</button>
       </div>
       <div id="device-container"></div>
-      <button id="link-another" class="link-btn">+ Link another device</button>
+      <button id="link-another" class="link-btn" data-i18n="linkAnother">+ Link another device</button>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-firestore-compat.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
