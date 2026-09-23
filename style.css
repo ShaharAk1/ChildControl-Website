@@ -234,3 +234,116 @@ input:focus {
   .page { padding: 30px 12px; }
   .card { padding: 22px; border-radius: 18px; }
 }
+
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  background: rgba(138, 148, 172, 0.14);
+  color: #8a94ac;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pending-badge[hidden] { display: none; }
+
+.pending-text::after {
+  content: "";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: pending-dots 1.4s steps(4, end) infinite;
+}
+
+.pending-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(138, 148, 172, 0.35);
+  border-top-color: #8a94ac;
+  animation: pending-spin 0.8s linear infinite;
+}
+
+@keyframes pending-spin { to { transform: rotate(360deg); } }
+
+@keyframes pending-dots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending-spinner, .pending-text::after { animation: none; }
+  .pending-text::after { content: "..."; }
+}
+
+.lists-section { margin-top: 24px; }
+
+.list-editor { margin-bottom: 18px; }
+
+.list-editor h3 { margin: 0 0 8px; font-size: 15px; }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: rgba(138, 148, 172, 0.16);
+  font-size: 13px;
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  line-height: 1;
+  font-size: 16px;
+}
+
+.chip button:hover { background: rgba(221, 107, 127, 0.25); }
+
+.list-add-row { display: flex; gap: 8px; align-items: center; }
+
+.list-add-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(138, 148, 172, 0.5);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.state-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 12px 0 10px;
+  font-size: 13px;
+}
+
+.legend-item { display: inline-flex; align-items: center; gap: 8px; }
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex: none;
+}
