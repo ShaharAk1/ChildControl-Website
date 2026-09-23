@@ -20,6 +20,9 @@ const db = firebase.firestore();
 // --- schedule constants, mirrored from childcontrol/schedule.py ---------------
 
 const SLOTS_PER_DAY = 48;
+// Grid rows top-to-bottom as day indices (Monday=0): shown Sunday-first, but
+// stored and synced Monday-first like childcontrol/schedule.py.
+const ROW_DAYS = [6, 0, 1, 2, 3, 4, 5];
 const STATES = ["F", "S", "L"];
 const stateName = (code) => (["F", "S", "L"].includes(code) ? t("state." + code) : t("state.unknown"));
 const STATE_COLORS = { F: "#3fa579", S: "#e0982f", L: "#dd6b7f" };
@@ -200,8 +203,9 @@ function buildScheduleGrid(container, initialWeek, onDirty) {
       const hh = String(Math.floor(slot / 2)).padStart(2, "0");
       ctx.fillText(`${hh}:00`, x + 2, HEADER_H - 5);
     }
-    for (let day = 0; day < 7; day++) {
-      const y = HEADER_H + day * CELL_H;
+    for (let rowIndex = 0; rowIndex < 7; rowIndex++) {
+      const day = ROW_DAYS[rowIndex];
+      const y = HEADER_H + rowIndex * CELL_H;
       ctx.fillStyle = "#20263a";
       ctx.font = "10px Segoe UI, sans-serif";
       ctx.textAlign = "right";
@@ -216,10 +220,10 @@ function buildScheduleGrid(container, initialWeek, onDirty) {
   }
 
   function cellAt(x, y) {
-    const day = Math.floor((y - HEADER_H) / CELL_H);
+    const rowIndex = Math.floor((y - HEADER_H) / CELL_H);
     const slot = Math.floor((x - LABEL_W) / CELL_W);
-    if (day < 0 || day > 6 || slot < 0 || slot >= SLOTS_PER_DAY) return null;
-    return [day, slot];
+    if (rowIndex < 0 || rowIndex > 6 || slot < 0 || slot >= SLOTS_PER_DAY) return null;
+    return [ROW_DAYS[rowIndex], slot];
   }
 
   function paint(clientX, clientY) {
