@@ -658,11 +658,6 @@ function createDeviceCard(deviceId, data) {
   function updateLists(docData) {
     const reported = docData.status || {};
     const hasReport = Array.isArray(reported.blockedSites) && Array.isArray(reported.blockedApps);
-    if (hasReport && !listsDirty) {
-      sitesEditor.set(reported.blockedSites);
-      appsEditor.set(reported.blockedApps);
-    }
-    listsNote.textContent = hasReport ? "" : t("lists.waiting");
 
     const sentAt = docData.blockedUpdatedAt && docData.blockedUpdatedAt.toMillis ? docData.blockedUpdatedAt.toMillis() : 0;
     const recent = sentAt && Date.now() - sentAt < LISTS_PENDING_MAX_MS;
@@ -670,6 +665,23 @@ function createDeviceCard(deviceId, data) {
     const requestedApps = Array.isArray(docData.blockedApps) ? docData.blockedApps : [];
     const waiting = recent && !listsDirty && (!hasReport ||
       !sameList(requestedSites, reported.blockedSites) || !sameList(requestedApps, reported.blockedApps));
+
+    // The grid mirrors the schedule the PC itself reports; while a saved
+    // list is still on its way, show what was sent instead of the old one -
+    // otherwise a pending change flashes back to the stale reported list
+    // until the next heartbeat catches up (or gets overwritten by a Save
+    // that unknowingly re-sends that stale list).
+    if (!listsDirty) {
+      if (waiting) {
+        sitesEditor.set(requestedSites);
+        appsEditor.set(requestedApps);
+      } else if (hasReport) {
+        sitesEditor.set(reported.blockedSites);
+        appsEditor.set(reported.blockedApps);
+      }
+    }
+    listsNote.textContent = hasReport ? "" : t("lists.waiting");
+
     listsPending.el.hidden = !waiting;
     if (waiting) listsPending.text.textContent = t("pending.lists");
     clearTimeout(listsTimer);
