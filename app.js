@@ -320,15 +320,47 @@ function sameList(a, b) {
   return key(a) === key(b);
 }
 
-function createListEditor(title, hint, normalize, check, onChange) {
+function loadCollapsed(storageKey) {
+  try {
+    return storageKey ? localStorage.getItem(`listCollapsed:${storageKey}`) === "1" : false;
+  } catch (e) {
+    return false;
+  }
+}
+
+function saveCollapsed(storageKey, collapsed) {
+  try {
+    if (!storageKey) return;
+    if (collapsed) localStorage.setItem(`listCollapsed:${storageKey}`, "1");
+    else localStorage.removeItem(`listCollapsed:${storageKey}`);
+  } catch (e) { /* storage unavailable: collapse state just won't survive a reload */ }
+}
+
+function createListEditor(title, hint, normalize, check, onChange, storageKey) {
   const wrap = document.createElement("div");
   wrap.className = "list-editor";
+
+  const header = document.createElement("button");
+  header.type = "button";
+  header.className = "list-editor-header";
+  const chevron = document.createElement("span");
+  chevron.className = "list-editor-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.textContent = "▾";
   const h = document.createElement("h3");
   h.textContent = title;
-  wrap.appendChild(h);
+  const count = document.createElement("span");
+  count.className = "list-editor-count";
+  header.append(chevron, h, count);
+  wrap.appendChild(header);
+
+  const body = document.createElement("div");
+  body.className = "list-editor-body";
+  wrap.appendChild(body);
+
   const chips = document.createElement("div");
   chips.className = "chips";
-  wrap.appendChild(chips);
+  body.appendChild(chips);
   const row = document.createElement("form");
   row.className = "list-add-row";
   const input = document.createElement("input");
@@ -340,13 +372,23 @@ function createListEditor(title, hint, normalize, check, onChange) {
   addBtn.className = "pill-btn small";
   addBtn.textContent = t("lists.add");
   row.append(input, addBtn);
-  wrap.appendChild(row);
+  body.appendChild(row);
   const err = document.createElement("p");
   err.className = "error";
-  wrap.appendChild(err);
+  body.appendChild(err);
+
+  function setCollapsed(collapsed) {
+    wrap.classList.toggle("collapsed", collapsed);
+    header.setAttribute("aria-expanded", String(!collapsed));
+    saveCollapsed(storageKey, collapsed);
+  }
+  header.setAttribute("aria-expanded", "true");
+  header.addEventListener("click", () => setCollapsed(!wrap.classList.contains("collapsed")));
+  if (loadCollapsed(storageKey)) setCollapsed(true);
 
   let items = [];
   function render() {
+    count.textContent = items.length ? ` (${items.length})` : "";
     chips.textContent = "";
     if (!items.length) {
       const empty = document.createElement("span");
@@ -552,8 +594,8 @@ function createDeviceCard(deviceId, data) {
     saveListsBtn.disabled = false;
     saveListsBtn.textContent = t("lists.save");
   };
-  const sitesEditor = createListEditor(t("lists.sites"), "youtube.com", normalizeDomain, checkDomain, markListsDirty);
-  const appsEditor = createListEditor(t("lists.apps"), "steam.exe", normalizeApp, checkApp, markListsDirty);
+  const sitesEditor = createListEditor(t("lists.sites"), "youtube.com", normalizeDomain, checkDomain, markListsDirty, `${deviceId}:sites`);
+  const appsEditor = createListEditor(t("lists.apps"), "steam.exe", normalizeApp, checkApp, markListsDirty, `${deviceId}:apps`);
   const listsNote = document.createElement("p");
   listsNote.className = "muted";
   const saveListsBtn = document.createElement("button");
