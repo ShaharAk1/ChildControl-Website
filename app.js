@@ -155,7 +155,9 @@ document.getElementById("pairing-form").addEventListener("submit", async (e) => 
 
   const deviceUid = codeDoc.data().deviceUid;
   try {
-    await db.collection("devices").doc(deviceUid).update({ ownerUid: auth.currentUser.uid });
+    await db.collection("devices").doc(deviceUid).update({
+      ownerUids: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid),
+    });
   } catch (err) {
     errorEl.textContent = t("err.alreadyLinked");
     errorEl.hidden = false;
@@ -590,7 +592,9 @@ function createDeviceCard(deviceId, data) {
     const name = nameInput.value.trim() || t("unlink.thisDevice");
     if (!confirm(t("unlink.confirm", { name }))) return;
     try {
-      await db.collection("devices").doc(deviceId).update({ ownerUid: null });
+      await db.collection("devices").doc(deviceId).update({
+        ownerUids: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.uid),
+      });
     } catch (err) {
       alert(t("unlink.failed", { msg: err.message }));
     }
@@ -787,7 +791,7 @@ auth.onAuthStateChanged((user) => {
   }
 
   let firstSnapshot = true;
-  unsubscribeList = db.collection("devices").where("ownerUid", "==", user.uid)
+  unsubscribeList = db.collection("devices").where("ownerUids", "array-contains", user.uid)
     .onSnapshot((snapshot) => {
       lastDeviceDocs = snapshot.docs;
       renderDeviceList(snapshot.docs);
