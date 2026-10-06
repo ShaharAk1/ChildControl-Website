@@ -285,7 +285,34 @@ input:focus {
 
 .list-editor { margin-bottom: 18px; }
 
-.list-editor h3 { margin: 0 0 8px; font-size: 15px; }
+.list-editor-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0 0 8px;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.list-editor-header h3 { margin: 0; font-size: 15px; }
+
+.list-editor-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+  color: var(--muted);
+}
+
+.list-editor.collapsed .list-editor-chevron { transform: rotate(-90deg); }
+
+.list-editor-count { color: var(--muted); font-size: 13px; }
+
+.list-editor.collapsed .list-editor-body { display: none; }
 
 .chips {
   display: flex;
